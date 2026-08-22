@@ -1,10 +1,11 @@
+import "dotenv/config";
 import express from "express";
 import { authRouter } from "./auth/auth.routes.js";
 
 const app = express();
-
 const port = process.env.PORT;
 
+app.use(express.json());
 app.use("/auth", authRouter);
 
 app.listen(port, () => {
