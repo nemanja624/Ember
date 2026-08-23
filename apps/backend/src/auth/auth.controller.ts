@@ -10,8 +10,11 @@ export async function register(req: Request, res: Response) {
     }
 
     try {
-        const user = await registerUser(parsed.data.email, parsed.data.password, parsed.data.name);
-        res.status(201).json({ id: user.id, email: user.email });
+        const result = await registerUser(parsed.data.email, parsed.data.password, parsed.data.name, parsed.data.organizationName);
+        res.status(201).json({
+            id: result.user.id, 
+            email: result.user.email,
+        });
     } 
     catch(err) {
         console.log(err);
