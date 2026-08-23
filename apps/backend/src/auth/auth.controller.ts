@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { loginUser, registerUser } from "./auth.service.js";
+import { getUserById, loginUser, registerUser } from "./auth.service.js";
 import { registerSchema } from "./auth.schema.js";
 
 export async function register(req: Request, res: Response, next: NextFunction) {
@@ -52,5 +52,20 @@ export async function login(req: Request, res: Response, next: NextFunction) {
         return res.status(500).json({
             error: "Unexpected error",
         });
+    }
+}
+
+export async function getUserInfo(req: Request, res: Response, next: NextFunction) {
+    try {
+        const user = await getUserById(req.user.userId);
+
+        return res.status(200).json({ 
+            id: user.id,
+            name: user.name,
+            organizationId: req.user.organizationId,
+        });
+    }
+    catch(err) {
+        next(err);
     }
 }
