@@ -1,8 +1,8 @@
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import { loginUser, registerUser } from "./auth.service.js";
 import { registerSchema } from "./auth.schema.js";
 
-export async function register(req: Request, res: Response) {
+export async function register(req: Request, res: Response, next: NextFunction) {
     const parsed = registerSchema.safeParse(req.body);
 
     if(!parsed.success) {
@@ -26,7 +26,7 @@ export async function register(req: Request, res: Response) {
     }
 }
 
-export async function login(req: Request, res: Response) {
+export async function login(req: Request, res: Response, next: NextFunction) {
     try {
         const { email, password } = req.body;
 
