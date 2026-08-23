@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { registerUser } from "./auth.service.js";
+import { loginUser, registerUser } from "./auth.service.js";
 import { registerSchema } from "./auth.schema.js";
 
 export async function register(req: Request, res: Response) {
@@ -23,5 +23,34 @@ export async function register(req: Request, res: Response) {
         }
 
         res.status(500).json({ error: "Unexpected error" });
+    }
+}
+
+export async function login(req: Request, res: Response) {
+    try {
+        const { email, password } = req.body;
+
+        if(!email || !password) {
+            throw new Error("MISSING_CREDENTIALS");
+        }
+
+        const { accessToken, refreshToken } = await loginUser(email, password);
+
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+        });
+
+        return res.status(200).json({ accessToken });    
+    } 
+    catch(err) {
+        if(err instanceof Error && err.message === "INVALID_CREDENTIALS") {
+            return res.status(401).json({ error: "Invalid credentials" });
+        }
+
+        return res.status(500).json({
+            error: "Unexpected error",
+        });
     }
 }
