@@ -1,12 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
-
-const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET!;
-
-type AccessTokenPayload = {
-    userId: string;
-    organizationId: string;
-};
+import { verifyAccessToken } from "../shared/jwt.js";
 
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
     const authHeader = req.headers.authorization;
@@ -22,13 +15,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     }
 
     try {    
-        const decoded = jwt.verify(token, JWT_ACCESS_SECRET);
-        
-        if(typeof decoded === "string") {
-            return res.status(401).json({ msg: "Unauthorized" });
-        }
-
-        const payload = decoded as AccessTokenPayload;
+        const payload = verifyAccessToken(token);
 
         req.user = {
             userId: payload.userId,

@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { getUserById, loginUser, registerUser } from "./auth.service.js";
+import { getUserById, loginUser, refreshAccessToken, registerUser } from "./auth.service.js";
 import { registerSchema } from "./auth.schema.js";
 
 export async function register(req: Request, res: Response, next: NextFunction) {
@@ -67,5 +67,21 @@ export async function getUserInfo(req: Request, res: Response, next: NextFunctio
     }
     catch(err) {
         next(err);
+    }
+}
+
+export function refresh(req: Request, res: Response, next: NextFunction) {
+    const token = req.cookies?.refreshToken;
+
+    if(!token) {
+        return res.status(401).json({ error: "Refresh token not found" });
+    }
+
+    try {
+        const accessToken = refreshAccessToken(token);
+        res.json({ accessToken });
+    }
+    catch(error) {
+        res.status(401).json({ error: "Refresh token is either invalid or expired" });
     }
 }

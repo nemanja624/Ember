@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import { prisma } from "../shared/prisma.js";
 import { signAccessToken, signRefreshToken } from "../shared/jwt.js";
+import { verifyRefreshToken } from "../shared/jwt.js";
 
 export async function registerUser(email: string, password: string, name: string, organizationName: string) {
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -94,5 +95,10 @@ export async function getUserById(id: string) {
     }
 
     return user;
+}
+
+export function refreshAccessToken(refreshToken: string) {
+    const payload = verifyRefreshToken(refreshToken);
+    return signAccessToken({ userId: payload.userId, organizationId: payload.organizationId });
 }
  
