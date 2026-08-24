@@ -96,3 +96,15 @@ export function refresh(req: Request, res: Response, next: NextFunction) {
         res.status(401).json({ error: "Refresh token is either invalid or expired" });
     }
 }
+
+export function logout(req: Request, res: Response) {
+    res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+    });
+
+    return res.status(200).json({
+        message: "Logged out successfully",
+    });
+}
