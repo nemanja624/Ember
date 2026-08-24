@@ -71,6 +71,10 @@ export async function getUserInfo(req: Request, res: Response, next: NextFunctio
 }
 
 export function refresh(req: Request, res: Response, next: NextFunction) {
+    
+    console.log("RAW COOKIE: ", req.headers.cookie);
+    console.log("PARSED COOKIES: ", req.cookies);
+
     const token = req.cookies?.refreshToken;
 
     if(!token) {
