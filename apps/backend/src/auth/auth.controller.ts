@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import { getUserById, loginUser, refreshAccessToken, registerUser } from "./auth.service.js";
+import { getUserById, loginUser, refreshTokens, registerUser } from "./auth.service.js";
 import { registerSchema } from "./auth.schema.js";
 
 export async function register(req: Request, res: Response, next: NextFunction) {
@@ -78,7 +78,14 @@ export function refresh(req: Request, res: Response, next: NextFunction) {
     }
 
     try {
-        const accessToken = refreshAccessToken(token);
+        const { accessToken, refreshToken } = refreshTokens(token);
+
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+        });
+
         res.json({ accessToken });
     }
     catch(error) {

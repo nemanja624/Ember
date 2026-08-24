@@ -97,8 +97,19 @@ export async function getUserById(id: string) {
     return user;
 }
 
-export function refreshAccessToken(refreshToken: string) {
-    const payload = verifyRefreshToken(refreshToken);
-    return signAccessToken({ userId: payload.userId, organizationId: payload.organizationId });
+export function refreshTokens(oldRefreshToken: string) {
+    const payload = verifyRefreshToken(oldRefreshToken);
+    
+    const accessToken = signAccessToken({
+        userId: payload.userId,
+        organizationId: payload.organizationId 
+    });
+
+    const refreshToken = signRefreshToken({
+        userId: payload.userId, 
+        organizationId: payload.organizationId 
+    });
+
+    return { accessToken, refreshToken };
 }
  
