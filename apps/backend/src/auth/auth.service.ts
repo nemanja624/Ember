@@ -112,4 +112,19 @@ export function refreshTokens(oldRefreshToken: string) {
 
     return { accessToken, refreshToken };
 }
- 
+
+export async function getUserRoleFromDb(userId: string, organizationId: string) {
+    const membership = await prisma.orgMembership.findUnique({
+        where: {
+            organizationId_userId: {
+                organizationId,
+                userId,
+            },
+        },
+        select: {
+            role: true,
+        },
+    });
+
+    return membership?.role ?? null;
+}

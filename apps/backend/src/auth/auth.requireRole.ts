@@ -1,32 +1,29 @@
 import { Request, Response, NextFunction } from "express";
-
-interface AuthenticatedUser {
-  userId: string;
-  organizationId: string;
-  role?: string;
-}
-
-interface AuthenticatedRequest extends Request {
-  user?: AuthenticatedUser;
-}
+import { getUserRoleFromDb } from "./auth.service.js";
 
 export function requireRole(...allowedRoles: string[]) {
-  return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+  return async(req: Request, res: Response, next: NextFunction) => {
     try {
-      if (!req.user || !req.user.role) {
-        res.status(403).json({ error: 'Forbidden: No role assigned' });
-        return;
+      if(!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
       }
 
-      if (!allowedRoles.includes(req.user.role)) {
-        res.status(403).json({ error: 'Forbidden: Insufficient privileges' });
-        return;
+      const role = await getUserRoleFromDb(req.user.userId, req.user.organizationId);
+
+      if(!role) {
+        return res.status(403).json({ error: "User is not a member of this organization" });
+      }
+
+      if(!allowedRoles.includes(role)) {
+        return res.status(401).json({ error: "Insufficient privileges" });
       }
 
       next();
-    } catch (err) {
-      console.error('Role check error:', err);
-      res.status(500).json({ error: 'Internal server error during role check' });
+    }
+    catch(error) {
+      console.error("Role check error: ", error);
+      return res.status(500).json({ error: "Internal server error" });
     }
   };
 }
+
