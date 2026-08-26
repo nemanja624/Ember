@@ -100,9 +100,15 @@ export async function getUserById(id: string) {
 export function refreshTokens(oldRefreshToken: string) {
     const payload = verifyRefreshToken(oldRefreshToken);
 
-    const accessToken = signAccessToken(payload);
+    const tokenPayload = {
+        userId: payload.userId,
+        organizationId: payload.organizationId,
+        role: payload.role,
+    };
 
-    const refreshToken = signRefreshToken(payload);
+    const accessToken = signAccessToken(tokenPayload);
+
+    const refreshToken = signRefreshToken(tokenPayload);
 
     return { accessToken, refreshToken };
 }
