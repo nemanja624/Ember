@@ -20,12 +20,14 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         req.user = {
             userId: payload.userId,
             organizationId: payload.organizationId,
+            role: payload.role,
         };
 
         next();
     }
     
     catch(err) {
+        console.error("JWT verification failed", err);
         return res.status(401).json({ msg: "Unauthorized" });
     }
 }
