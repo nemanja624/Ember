@@ -1,7 +1,6 @@
 import bcrypt from "bcrypt";
 import { prisma } from "../shared/prisma.js";
-import { signAccessToken, signRefreshToken } from "../shared/jwt.js";
-import { verifyRefreshToken } from "../shared/jwt.js";
+import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../shared/jwt.js";
 
 export async function registerUser(email: string, password: string, name: string, organizationName: string) {
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -71,6 +70,7 @@ export async function loginUser(email: string, password: string) {
     const payload = {
         userId: user.id,
         organizationId: membership.organizationId,
+        role: membership.role,
     };
 
     const accessToken = signAccessToken(payload)
@@ -100,31 +100,9 @@ export async function getUserById(id: string) {
 export function refreshTokens(oldRefreshToken: string) {
     const payload = verifyRefreshToken(oldRefreshToken);
 
-    const accessToken = signAccessToken({
-        userId: payload.userId,
-        organizationId: payload.organizationId 
-    });
+    const accessToken = signAccessToken(payload);
 
-    const refreshToken = signRefreshToken({
-        userId: payload.userId, 
-        organizationId: payload.organizationId 
-    });
+    const refreshToken = signRefreshToken(payload);
 
     return { accessToken, refreshToken };
-}
-
-export async function getUserRoleFromDb(userId: string, organizationId: string) {
-    const membership = await prisma.orgMembership.findUnique({
-        where: {
-            organizationId_userId: {
-                organizationId,
-                userId,
-            },
-        },
-        select: {
-            role: true,
-        },
-    });
-
-    return membership?.role ?? null;
 }

@@ -20,6 +20,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         req.user = {
             userId: payload.userId,
             organizationId: payload.organizationId,
+            role: payload.role,
         };
 
         next();

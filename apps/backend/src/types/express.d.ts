@@ -4,7 +4,8 @@ declare global {
             user: {
                 userId: string;
                 organizationId: string;
-            }
+                role: string;
+            };
         }
     }
 }

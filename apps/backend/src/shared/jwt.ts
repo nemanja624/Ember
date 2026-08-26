@@ -11,6 +11,7 @@ if(!JWT_ACCESS_SECRET || !JWT_REFRESH_SECRET) {
 type TokenPayload = {
     userId: string,
     organizationId: string;
+    role: string;
 };
 
 export function signAccessToken(payload: TokenPayload) {
