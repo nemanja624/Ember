@@ -61,9 +61,7 @@ model Monitor {
   expectedStatus  Int @default(200)
   createdAt       DateTime @default(now())
 
-  organization    Organization @relation(
-    fields: [organizationId] references: [id]
-  )
+  organization   Organization   @relation(fields: [organizationId], references: [id])
 
   @@map("monitors")  
 }
