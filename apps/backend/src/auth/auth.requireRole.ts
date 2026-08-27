@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
 
 export function requireRole(...allowedRoles: string[]) {
   return(req: Request, res: Response, next: NextFunction) => {
@@ -13,4 +13,3 @@ export function requireRole(...allowedRoles: string[]) {
     next()
   };
 }
-
