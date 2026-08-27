@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { OrgRole } from "@prisma/client";
+import { OrgRole } from "../../generated/prisma/client.js";
 
 const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET!;
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET!;
@@ -46,5 +46,3 @@ export function verifyRefreshToken(token: string) {
 
     return decoded as TokenPayload;
 }
-
-
