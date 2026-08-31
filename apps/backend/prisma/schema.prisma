@@ -63,6 +63,7 @@ model Monitor {
 
   organization   Organization   @relation(fields: [organizationId], references: [id])
 
+  // @@index([organizationId]) - add index for fast search
   @@map("monitors")  
 }
 
