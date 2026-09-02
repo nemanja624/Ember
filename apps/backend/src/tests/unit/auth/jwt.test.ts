@@ -1,4 +1,6 @@
 import { expect, test } from "vitest";
+import jwt from "jsonwebtoken";
+import { vi } from "vitest";
 import { signAccessToken, signRefreshToken, verifyAccessToken, verifyRefreshToken } from "../../../shared/jwt.js";
 
 const payload = {
@@ -37,4 +39,27 @@ test("properly verifies refresh token", () => {
     expect(decoded.userId).toBe(payload.userId);
     expect(decoded.organizationId).toBe(payload.organizationId);
     expect(decoded.role).toBe(payload.role);
+});
+
+test("rejects access token signed with wrong secret", () => {
+    const refreshToken = signRefreshToken(payload);
+
+    expect(() => verifyAccessToken(refreshToken)).toThrow();
+});
+
+test("rejects a token whose payload is a plain string", () => {
+    const weirdToken = jwt.sign("just-a-string", process.env["JWT_ACCESS_SECRET"]!);
+
+    expect(() => verifyAccessToken(weirdToken)).toThrow();
+});
+
+test("rejects an expired access token", () => {
+    const token = signAccessToken(payload);
+
+    vi.useFakeTimers();
+    vi.advanceTimersByTime(16 * 60 * 1000);
+
+    expect(() => verifyAccessToken(token)).toThrow();
+
+    vi.useRealTimers();
 });

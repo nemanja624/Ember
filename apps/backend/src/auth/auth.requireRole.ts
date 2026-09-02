@@ -10,7 +10,7 @@ export function requireRole(...allowedRoles: string[]) {
       return res.status(403).json({ error: "Insufficient privileges" });
     }
 
-    next()
+    next();
   };
 }
 
