@@ -3,9 +3,9 @@ import { mockDeep, type DeepMockProxy } from "vitest-mock-extended";
 import bcrypt from "bcrypt";
 import { PrismaClient } from "../../../../generated/prisma/client.js";
 import { prisma } from "../../../shared/prisma.js";
-import { registerUser } from "../../../auth/auth.service.js";
+import { loginUser, registerUser } from "../../../auth/auth.service.js";
+import { signAccessToken, signRefreshToken } from "../../../shared/jwt.js";
 
-// 1. Popravljena putanja da se tačno poklapa sa importom (.js)
 vi.mock("../../../shared/prisma.js", () => ({
     prisma: mockDeep<PrismaClient>(),
 }));
@@ -21,40 +21,37 @@ vi.mock("../../../shared/jwt.js", () => ({
 const prismaMock = prisma as unknown as DeepMockProxy<PrismaClient>;
 
 beforeEach(() => {
-    // 2. Zamena za mockReset(prismaMock) koja ne puca
     vi.resetAllMocks();
 });
 
 describe("registerUser", () => {
     test("throws USER_ALREADY_EXISTS if the email is already taken", async () => {
-    prismaMock.user.findUnique.mockResolvedValue({ id: "u1" } as any);
+        prismaMock.user.findUnique.mockResolvedValue({ id: "u1" } as any);
 
-    await expect(registerUser("a@b.com", "password123", "Nemanja", "ACME")).rejects.toThrow("USER_ALREADY_EXISTS");
+        await expect(registerUser("a@b.com", "password123", "Nemanja", "ACME")).rejects.toThrow("USER_ALREADY_EXISTS");
     });
 
     test("creates a user, an organization, and an OWNER membership", async () => {
-    prismaMock.user.findUnique.mockResolvedValue(null);
-    vi.mocked(bcrypt.hash).mockResolvedValue("hashed-password" as never);
+        prismaMock.user.findUnique.mockResolvedValue(null);
+        vi.mocked(bcrypt.hash).mockResolvedValue("hashed-password" as never);
 
-    const fakeUser = { id: "u1", email: "a@b.com", passwordHash: "hashed-password", name: "Nemanja" };
-    const fakeOrg = { id: "org1", name: "Acme", slug: "acme" };
+        const fakeUser = { id: "u1", email: "a@b.com", passwordHash: "hashed-password", name: "Nemanja" };
+        const fakeOrg = { id: "org1", name: "Acme", slug: "acme" };
 
-    (prismaMock.$transaction as any).mockImplementation((callback: any) => callback(prismaMock));
-    prismaMock.user.create.mockResolvedValue(fakeUser as any);
-    prismaMock.organization.create.mockResolvedValue(fakeOrg as any);
-    prismaMock.orgMembership.create.mockResolvedValue({} as any);
+        (prismaMock.$transaction as any).mockImplementation((callback: any) => callback(prismaMock));
+        prismaMock.user.create.mockResolvedValue(fakeUser as any);
+        prismaMock.organization.create.mockResolvedValue(fakeOrg as any);
+        prismaMock.orgMembership.create.mockResolvedValue({} as any);
 
-    const result = await registerUser("a@b.com", "password123", "Nemanja", "Acme");
+        const result = await registerUser("a@b.com", "password123", "Nemanja", "Acme");
 
-    expect(result).toEqual({ user: fakeUser, organization: fakeOrg });
-    expect(bcrypt.hash).toHaveBeenCalledWith("password123", 10);
+        expect(result).toEqual({ user: fakeUser, organization: fakeOrg });
+        expect(bcrypt.hash).toHaveBeenCalledWith("password123", 10);
 
-    // 3. Ispravljen poziv - proverava se šta je stvarno poslato u organization.create
-    expect(prismaMock.organization.create).toHaveBeenCalledWith({
-        data: { name: "Acme", slug: "acme" },
+        expect(prismaMock.organization.create).toHaveBeenCalledWith({
+            data: { name: "Acme", slug: "acme" },
     });
 
-    // Provera za membership
     expect(prismaMock.orgMembership.create).toHaveBeenCalledWith({
         data: { organizationId: "org1", userId: "u1", role: "OWNER" },
     });
@@ -74,4 +71,57 @@ describe("registerUser", () => {
       data: { name: " My New Company ", slug: "my-new-company" },
     });
   });
+});
+
+describe("loginUser", () => {
+    test("throws INVALID_CREDENTIALS if the user doesn't exist", async () => {
+        prismaMock.user.findUnique.mockResolvedValue(null);
+
+        await expect(loginUser("a@b.com", "password123")).rejects.toThrow("INVALID_CREDENTIALS");
+    });
+
+    test("throws INVALID_CREDENTIALS if the password doesn't match", async () => {
+        prismaMock.user.findUnique.mockResolvedValue({
+            id: "u1",
+            passwordHash: "hashed",
+            memberships: [{ organizationId: "org1", role: "OWNER" }],
+        } as any);
+
+        vi.mocked(bcrypt.compare).mockResolvedValue(false as never);
+
+        await expect(loginUser("a@b.com", "password123")).rejects.toThrow("INVALID_CREDENTIALS");
+    });
+
+    test("throws USER_HAS_NO_ORGANIZATION if the user has no membership", async () => {
+        prismaMock.user.findUnique.mockResolvedValue({
+            id: "u1",
+            passwordHash: "hashed",
+            memberships: [],
+        } as any);
+
+        vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+
+        await expect(loginUser("a@b.com", "password123")).rejects.toThrow("USER_HAS_NO_ORGANIZATION");
+    });
+
+    test("returns an access and refresh token on successful login", async () => {
+        prismaMock.user.findUnique.mockResolvedValue({
+            id: "u1",
+            passwordHash: "hashed",
+            memberships: [{ organizationId: "org1", role: "OWNER" }],
+        } as any);
+
+        vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
+        vi.mocked(signAccessToken).mockResolvedValue("access-token-123");
+        vi.mocked(signRefreshToken).mockResolvedValue("refresh-token-123");
+
+        const result = await loginUser("a@b.com", "password123");
+
+        expect(result).toEqual({ accessToken: "access-token-123", refreshToken: "refresh-token-123" });
+        expect(signAccessToken).toHaveBeenCalledWith({ userId: "u1", organizationId: "org1", role: "OWNER" });
+    });
+
+    test("issues a new access and refresh token from a valid refresh token", async () => {
+
+    });
 });
