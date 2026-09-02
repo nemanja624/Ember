@@ -112,12 +112,13 @@ describe("loginUser", () => {
         } as any);
 
         vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
-        vi.mocked(signAccessToken).mockResolvedValue("access-token-123");
-        vi.mocked(signRefreshToken).mockResolvedValue("refresh-token-123");
+        vi.mocked(signAccessToken).mockReturnValue("access-token-123");
+        vi.mocked(signRefreshToken).mockReturnValue("refresh-token-123");
 
         const result = await loginUser("a@b.com", "password123");
 
-        expect(result).toEqual({ accessToken: "access-token-123", refreshToken: "refresh-token-123" });
+        // ima neka greska ovde -> popravi
+        expect(result).toEqual({ accessToken: "access-token-123", refreshToken: "refresh-token-123" }); 
         expect(signAccessToken).toHaveBeenCalledWith({ userId: "u1", organizationId: "org1", role: "OWNER" });
     });
 
