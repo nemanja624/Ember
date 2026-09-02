@@ -32,11 +32,13 @@
     "@types/node": "^24.13.3",
     "@types/pg": "^8.23.1",
     "@types/supertest": "^7.2.1",
+    "@vitest/coverage-v8": "4.1.11",
     "dotenv": "^17.4.2",
     "prisma": "^7.9.1",
     "supertest": "^7.2.2",
     "tsx": "^4.23.12",
     "typescript": "~6.0.3",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "vitest-mock-extended": "^5.1.1"
   }
 }
