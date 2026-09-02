@@ -1,6 +1,5 @@
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import jwt from "jsonwebtoken";
-import { vi } from "vitest";
 import { signAccessToken, signRefreshToken, verifyAccessToken, verifyRefreshToken } from "../../../shared/jwt.js";
 
 const payload = {
