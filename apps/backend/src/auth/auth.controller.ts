@@ -17,12 +17,7 @@ export async function register(req: Request, res: Response, next: NextFunction) 
         });
     } 
     catch(err) {
-        console.log(err);
-        if(err instanceof Error && err.message == "USER_ALREADY_EXISTS") {
-            return res.status(409).json({ error: "User with this email already exists" });
-        }
-
-        res.status(500).json({ error: "Unexpected error" });
+        next(err);
     }
 }
 
@@ -45,13 +40,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
         return res.status(200).json({ accessToken });    
     } 
     catch(err) {
-        if(err instanceof Error && err.message === "INVALID_CREDENTIALS") {
-            return res.status(401).json({ error: "Invalid credentials" });
-        }
-
-        return res.status(500).json({
-            error: "Unexpected error",
-        });
+        next(err);
     }
 }
 
@@ -78,7 +67,7 @@ export function refresh(req: Request, res: Response, next: NextFunction) {
     const token = req.cookies?.refreshToken;
 
     if(!token) {
-        return res.status(401).json({ error: "Refresh token not found" });
+        return next(new Error("REFRESH_TOKEN_INVALID"));
     }
 
     try {
@@ -92,8 +81,8 @@ export function refresh(req: Request, res: Response, next: NextFunction) {
 
         res.json({ accessToken });
     }
-    catch(error) {
-        res.status(401).json({ error: "Refresh token is either invalid or expired" });
+    catch(err) {
+        next(err);
     }
 }
 
