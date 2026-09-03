@@ -1,12 +1,12 @@
 import type { Request, Response, NextFunction } from "express";
 import { getUserById, loginUser, refreshTokens, registerUser } from "./auth.service.js";
-import { registerSchema } from "./auth.schema.js";
+import { registerSchema, loginSchema } from "./auth.schema.js";
 
 export async function register(req: Request, res: Response, next: NextFunction) {
     const parsed = registerSchema.safeParse(req.body);
 
     if(!parsed.success) {
-        return res.status(400).json({ error: parsed.error.issues });
+        return res.status(400).json({ error: parsed.error.issues, details: parsed.error.issues });
     }
 
     try {
@@ -22,14 +22,14 @@ export async function register(req: Request, res: Response, next: NextFunction) 
 }
 
 export async function login(req: Request, res: Response, next: NextFunction) {
+    const parsed = loginSchema.safeParse(req.body)
+
+    if(!parsed.success) {
+        return res.status(400).json({ error: "MISSING_CREDENTIALS", details: parsed.error.issues });
+    }
+
     try {
-        const { email, password } = req.body;
-
-        if(!email || !password) {
-            throw new Error("MISSING_CREDENTIALS");
-        }
-
-        const { accessToken, refreshToken } = await loginUser(email, password);
+        const { accessToken, refreshToken } = await loginUser(parsed.data.email, parsed.data.password);
 
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
@@ -37,8 +37,8 @@ export async function login(req: Request, res: Response, next: NextFunction) {
             sameSite: "lax",
         });
 
-        return res.status(200).json({ accessToken });    
-    } 
+        return res.status(200).json({ accessToken });
+    }
     catch(err) {
         next(err);
     }
