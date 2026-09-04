@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { mockDeep, type DeepMockProxy } from "vitest-mock-extended";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import { PrismaClient } from "../../../../generated/prisma/client.js";
 import { prisma } from "../../../shared/prisma.js";
 import { loginUser, refreshTokens, registerUser } from "../../../auth/auth.service.js";
@@ -126,8 +127,8 @@ describe("loginUser", () => {
         vi.mocked(verifyRefreshToken).mockReturnValue({ userId: "u1", organizationId: "o1", role: "OWNER" });
         vi.mocked(issueTokenPair).mockReturnValue({ accessToken: "new-access", refreshToken: "new-refresh" });
 
-        const result = refreshTokens("old-refresh-token");
+        const tokens = refreshTokens("old-refresh-token");
 
-        expect(result).toEqual({ accessToken: "new-access", refreshToken: "new-refresh" });
+        expect(tokens).toEqual({ accessToken: "new-access", refreshToken: "new-refresh" });
     });
 });

@@ -1,6 +1,6 @@
 import { expect, test, vi } from "vitest";
 import jwt from "jsonwebtoken";
-import { signAccessToken, signRefreshToken, verifyAccessToken, verifyRefreshToken } from "../../../shared/jwt.js";
+import { issueTokenPair, signAccessToken, signRefreshToken, verifyAccessToken, verifyRefreshToken } from "../../../shared/jwt.js";
 
 const payload = {
     userId: "user-123",
@@ -61,4 +61,17 @@ test("rejects an expired access token", () => {
     expect(() => verifyAccessToken(token)).toThrow();
 
     vi.useRealTimers();
+});
+
+test("properly issues token pair", () => {
+    const tokens = issueTokenPair(payload);
+
+    expect(tokens.accessToken).toBeTypeOf("string");
+    expect(tokens.refreshToken).toBeTypeOf("string");
+
+    const decodedAccess = verifyAccessToken(tokens.accessToken);
+    expect(decodedAccess.userId).toBe(payload.userId);
+
+    const decodedRefresh = verifyRefreshToken(tokens.refreshToken);
+    expect(decodedRefresh.userId).toBe(payload.userId);
 });
