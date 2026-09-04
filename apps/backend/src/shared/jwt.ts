@@ -46,4 +46,11 @@ export function verifyRefreshToken(token: string) {
     return decoded as TokenPayload;
 }
 
+export function issueTokenPair(payload: TokenPayload) {
+    const accessToken = signAccessToken(payload);
+    const refreshToken = signRefreshToken(payload);
+
+    return { accessToken, refreshToken };
+}
+
 

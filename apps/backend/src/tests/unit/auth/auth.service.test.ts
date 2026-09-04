@@ -3,9 +3,10 @@ import { mockDeep, type DeepMockProxy } from "vitest-mock-extended";
 import bcrypt from "bcrypt";
 import { PrismaClient } from "../../../../generated/prisma/client.js";
 import { prisma } from "../../../shared/prisma.js";
-import { loginUser, registerUser } from "../../../auth/auth.service.js";
-import { signAccessToken, signRefreshToken } from "../../../shared/jwt.js";
+import { loginUser, refreshTokens, registerUser } from "../../../auth/auth.service.js";
+import { issueTokenPair, signAccessToken, signRefreshToken, verifyRefreshToken } from "../../../shared/jwt.js";
 
+// returns a fake object that acts as PrismaClient
 vi.mock("../../../shared/prisma.js", () => ({
     prisma: mockDeep<PrismaClient>(),
 }));
@@ -16,8 +17,10 @@ vi.mock("../../../shared/jwt.js", () => ({
     signAccessToken: vi.fn(),
     signRefreshToken: vi.fn(),
     verifyRefreshToken: vi.fn(),
+    issueTokenPair: vi.fn(),
 }));
 
+// tells TS that PrismaClient uses vi.fn() mock in methods
 const prismaMock = prisma as unknown as DeepMockProxy<PrismaClient>;
 
 beforeEach(() => {
@@ -50,27 +53,27 @@ describe("registerUser", () => {
 
         expect(prismaMock.organization.create).toHaveBeenCalledWith({
             data: { name: "Acme", slug: "acme" },
-    });
+        });
 
-    expect(prismaMock.orgMembership.create).toHaveBeenCalledWith({
-        data: { organizationId: "org1", userId: "u1", role: "OWNER" },
-    });
+        expect(prismaMock.orgMembership.create).toHaveBeenCalledWith({
+            data: { organizationId: "org1", userId: "u1", role: "OWNER" },
+        });
 });
 
-  test("turns the organization name into a lowercase, dash-separated slug", async () => {
-    prismaMock.user.findUnique.mockResolvedValue(null);
-    vi.mocked(bcrypt.hash).mockResolvedValue("hashed" as never);
-    (prismaMock.$transaction as any).mockImplementation((callback: any) => callback(prismaMock));
-    prismaMock.user.create.mockResolvedValue({ id: "u1" } as any);
-    prismaMock.organization.create.mockResolvedValue({ id: "org1" } as any);
-    prismaMock.orgMembership.create.mockResolvedValue({} as any);
+    test("turns the organization name into a lowercase, dash-separated slug", async () => {
+        prismaMock.user.findUnique.mockResolvedValue(null);
+        vi.mocked(bcrypt.hash).mockResolvedValue("hashed" as never);
+        (prismaMock.$transaction as any).mockImplementation((callback: any) => callback(prismaMock));
+        prismaMock.user.create.mockResolvedValue({ id: "u1" } as any);
+        prismaMock.organization.create.mockResolvedValue({ id: "org1" } as any);
+        prismaMock.orgMembership.create.mockResolvedValue({} as any);
 
-    await registerUser("a@b.com", "password123", "Nemanja", " My New Company ");
+        await registerUser("a@b.com", "password123", "Nemanja", " My New Company ");
 
-    expect(prismaMock.organization.create).toHaveBeenCalledWith({
-      data: { name: " My New Company ", slug: "my-new-company" },
+        expect(prismaMock.organization.create).toHaveBeenCalledWith({
+            data: { name: " My New Company ", slug: "my-new-company" },
+        });
     });
-  });
 });
 
 describe("loginUser", () => {
@@ -112,17 +115,19 @@ describe("loginUser", () => {
         } as any);
 
         vi.mocked(bcrypt.compare).mockResolvedValue(true as never);
-        vi.mocked(signAccessToken).mockReturnValue("access-token-123");
-        vi.mocked(signRefreshToken).mockReturnValue("refresh-token-123");
+        vi.mocked(issueTokenPair).mockReturnValue({ accessToken: "access-token-123", refreshToken: "refresh-token-123" });
 
         const result = await loginUser("a@b.com", "password123");
 
-        // ima neka greska ovde -> popravi
         expect(result).toEqual({ accessToken: "access-token-123", refreshToken: "refresh-token-123" }); 
-        expect(signAccessToken).toHaveBeenCalledWith({ userId: "u1", organizationId: "org1", role: "OWNER" });
     });
 
     test("issues a new access and refresh token from a valid refresh token", async () => {
+        vi.mocked(verifyRefreshToken).mockReturnValue({ userId: "u1", organizationId: "o1", role: "OWNER" });
+        vi.mocked(issueTokenPair).mockReturnValue({ accessToken: "new-access", refreshToken: "new-refresh" });
 
+        const result = refreshTokens("old-refresh-token");
+
+        expect(result).toEqual({ accessToken: "new-access", refreshToken: "new-refresh" });
     });
 });

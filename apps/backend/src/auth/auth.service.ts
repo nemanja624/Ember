@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import { prisma } from "../shared/prisma.js";
-import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../shared/jwt.js";
+import { signAccessToken, signRefreshToken, verifyRefreshToken, issueTokenPair } from "../shared/jwt.js";
 
 export async function registerUser(email: string, password: string, name: string, organizationName: string) {
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -73,10 +73,7 @@ export async function loginUser(email: string, password: string) {
         role: membership.role,
     };
 
-    const accessToken = signAccessToken(payload)
-    const refreshToken = signRefreshToken(payload);
-
-    return { accessToken, refreshToken };
+    return issueTokenPair(payload);
 }
 
 export async function getUserById(id: string) {
@@ -100,15 +97,5 @@ export async function getUserById(id: string) {
 export function refreshTokens(oldRefreshToken: string) {
     const payload = verifyRefreshToken(oldRefreshToken);
 
-    const tokenPayload = {
-        userId: payload.userId,
-        organizationId: payload.organizationId,
-        role: payload.role,
-    };
-
-    const accessToken = signAccessToken(tokenPayload);
-
-    const refreshToken = signRefreshToken(tokenPayload);
-
-    return { accessToken, refreshToken };
+    return issueTokenPair(payload);
 }
