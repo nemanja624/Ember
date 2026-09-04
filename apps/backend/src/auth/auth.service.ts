@@ -97,5 +97,9 @@ export async function getUserById(id: string) {
 export function refreshTokens(oldRefreshToken: string) {
     const payload = verifyRefreshToken(oldRefreshToken);
 
-    return issueTokenPair(payload);
+    return issueTokenPair({
+        userId: payload.userId,
+        organizationId: payload.organizationId,
+        role: payload.role,
+    });
 }
