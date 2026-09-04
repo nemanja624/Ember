@@ -21,7 +21,7 @@ describe("Auth Integration Tests", () => {
   });
 
   describe("POST /api/auth/login", () => {
-    test("Successful login, sets HttpOnly cookie and returns accessToken", async () => {
+    test("successful login, sets HttpOnly cookie and returns accessToken", async () => {
       const fakeUser = {
         id: "user-123",
         email: "dev@ember.com",
@@ -41,5 +41,23 @@ describe("Auth Integration Tests", () => {
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty("accessToken");
     });
+
+    test("returns 401 inside error-handler when the password in incorrect", async () => {
+        prismaMock.user.findUnique.mockResolvedValue({
+            id: "user-123",
+            email: "dev@ember.com",
+            passwordHash: await bcrypt.hash("CorrectPassword123!", 10),
+            memberships: [{ organizationId: "org-123", role: "OWNER" }],
+        } as any);
+
+        const response = await request(app)
+            .post("/api/auth/login")
+            .send({
+                email: "dev@ember.com",
+                password: "WrongPassword123!",
+            });
+
+        expect(response.status).toBe(401);
+        expect(response.body).toEqual({ error: "INVALID_CREDENTIALS" });
   });
-});
+})});
