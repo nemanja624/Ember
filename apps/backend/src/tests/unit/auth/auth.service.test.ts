@@ -1,13 +1,12 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { mockDeep, type DeepMockProxy } from "vitest-mock-extended";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import { PrismaClient } from "../../../../generated/prisma/client.js";
 import { prisma } from "../../../shared/prisma.js";
 import { loginUser, refreshTokens, registerUser } from "../../../auth/auth.service.js";
-import { issueTokenPair, signAccessToken, signRefreshToken, verifyRefreshToken } from "../../../shared/jwt.js";
+import { issueTokenPair, verifyRefreshToken } from "../../../shared/jwt.js";
 
-// returns a fake object that acts as PrismaClient
+// creates a fake object that acts as PrismaClient
 vi.mock("../../../shared/prisma.js", () => ({
     prisma: mockDeep<PrismaClient>(),
 }));
