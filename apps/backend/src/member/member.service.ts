@@ -18,7 +18,7 @@ export async function inviteMember(orgId: string, input: InviteMemberInput) {
     });
 
     if(existingMembership) {
-        throw new Error("MEMBER_ALREADY_EXISTS"); // add to error-handler
+        throw new Error("MEMBER_ALREADY_EXISTS"); 
     }
 
     return await prisma.orgMembership.create({
