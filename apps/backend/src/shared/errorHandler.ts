@@ -7,6 +7,7 @@ const ERROR_STATUS_MAP: Record<string, number> = {
   USER_HAS_NO_ORGANIZATION: 403,
   USER_NOT_FOUND: 404,
   USER_ALREADY_EXISTS: 409,
+  ORGANIZATION_NOT_FOUND: 404,
 };
 
 export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction) {
