@@ -11,5 +11,6 @@ export const orgRouter: ExpressRouter = Router();
 orgRouter.use(authMiddleware);
 
 orgRouter.get("/me", myOrganization);
+orgRouter.get("/:id", organizationById);
 orgRouter.patch("/me", requireRole("OWNER", "ADMIN"), validate(updateOrgSchema), updateOrganization);
 orgRouter.post("/members", requireRole("OWNER", "ADMIN"), validate(inviteMemberSchema), inviteMember);
