@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "tsx watch src/server.js",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "test:db:push": "dotenv -e .env.test -- prisma db push",
+    "test:integration": "pnpm test:db:push && vitest run --no-file-parallelism"
   },
   "keywords": [],
   "author": "",
@@ -34,6 +36,7 @@
     "@types/supertest": "^7.2.1",
     "@vitest/coverage-v8": "4.1.11",
     "dotenv": "^17.4.2",
+    "dotenv-cli": "^11.0.0",
     "prisma": "^7.9.1",
     "supertest": "^7.2.2",
     "tsx": "^4.23.12",
