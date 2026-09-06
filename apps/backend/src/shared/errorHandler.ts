@@ -6,8 +6,9 @@ const ERROR_STATUS_MAP: Record<string, number> = {
   REFRESH_TOKEN_INVALID: 401,
   USER_HAS_NO_ORGANIZATION: 403,
   USER_NOT_FOUND: 404,
-  USER_ALREADY_EXISTS: 409,
   ORGANIZATION_NOT_FOUND: 404,
+  USER_ALREADY_EXISTS: 409,
+  MEMBER_ALREADY_EXISTS: 409,
 };
 
 export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction) {
