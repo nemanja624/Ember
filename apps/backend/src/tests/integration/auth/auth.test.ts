@@ -97,4 +97,85 @@ describe("Auth Integration Tests", () => {
           expect(response.body).toEqual({ error: "REFRESH_TOKEN_INVALID" });
       });
     });
+
+    describe("POST /api/auth/register", () => {
+      test("successfully registers user and organization inside transaction", async () => {
+      prismaMock.user.findUnique.mockResolvedValue(null);
+
+      // Mockovanje prisma.$transaction callback-a
+      prismaMock.$transaction.mockImplementation(async (cb: any) => {
+        return cb({
+          user: { create: vi.fn().mockResolvedValue({ id: "user-999", email: "new@ember.com", name: "New Dev" }) },
+          organization: { create: vi.fn().mockResolvedValue({ id: "org-999", name: "Ember Org", slug: "ember-org" }) },
+          orgMembership: { create: vi.fn().mockResolvedValue({ id: "mem-999", role: "OWNER" }) },
+        });
+      });
+
+      const response = await request(app)
+        .post("/api/auth/register")
+        .send({
+          email: "new@ember.com",
+          password: "Password123!",
+          name: "New Dev",
+          organizationName: "Ember Org",
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body).toHaveProperty("id", "user-999");
+      expect(response.body).toHaveProperty("email", "new@ember.com");
+      });
+
+      test("returns 409 if user already exists", async () => {
+        prismaMock.user.findUnique.mockResolvedValue({
+          id: "existing-123",
+          email: "dev@ember.com",
+        } as any);
+
+        const response = await request(app)
+          .post("/api/auth/register")
+          .send({
+            email: "dev@ember.com",
+            password: "Password123!",
+            name: "Existing User",
+            organizationName: "Ember Org",
+          });
+
+        expect(response.status).toBe(409);
+        expect(response.body).toEqual({ error: "USER_ALREADY_EXISTS" });
+      });
+    });
+
+    describe("GET /api/auth/me", () => {
+      test("returns user profile when valid accessToken is provided in Authorization header", async () => {
+        const { issueTokenPair } = await import("../../../shared/jwt.js");
+        const { accessToken } = issueTokenPair({
+          userId: "user-123",
+          organizationId: "org-123",
+          role: "OWNER",
+        });
+
+        prismaMock.user.findUnique.mockResolvedValue({
+          id: "user-123",
+          name: "Dev Ember",
+        } as any);
+
+        const response = await request(app)
+          .get("/api/auth/me")
+          .set("Authorization", `Bearer ${accessToken}`);
+
+        expect(response.status).toBe(200);
+        expect(response.body).toEqual(
+          expect.objectContaining({
+            id: "user-123",
+            name: "Dev Ember",
+          })
+        );
+      });
+
+      test("returns 401 when Authorization header is missing", async () => {
+        const response = await request(app).get("/api/auth/me");
+
+        expect(response.status).toBe(401);
+      });
+    });
 });
