@@ -1,7 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { z, ZodError } from "zod";
 
-// Koristimo z.ZodTypeAny umesto ZodSchema
 export function validate(schema: z.ZodTypeAny) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
