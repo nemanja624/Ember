@@ -1,19 +1,17 @@
 import type { Request, Response, NextFunction } from "express";
-import { getUserById, loginUser, refreshTokens, registerUser } from "./auth.service.js";
-import { registerSchema, loginSchema } from "./auth.schema.js";
+import * as authService from "./auth.service.js";
 
 export async function register(req: Request, res: Response, next: NextFunction) {
-    const parsed = registerSchema.safeParse(req.body);
-
-    if(!parsed.success) {
-        return res.status(400).json({ error: parsed.error.issues, details: parsed.error.issues });
-    }
-
     try {
-        const result = await registerUser(parsed.data.email, parsed.data.password, parsed.data.name, parsed.data.organizationName);
-        res.status(201).json({
-            id: result.user.id, 
-            email: result.user.email,
+        const { email, password, name, organizationName } = req.body; 
+
+        const result = await authService.registerUser(email, password, name, organizationName);
+
+        return res.status(201).json({
+            data: {
+                id: result.user.id,
+                email: result.user.email,
+            },
         });
     } 
     catch(err) {
@@ -22,14 +20,10 @@ export async function register(req: Request, res: Response, next: NextFunction) 
 }
 
 export async function login(req: Request, res: Response, next: NextFunction) {
-    const parsed = loginSchema.safeParse(req.body)
-
-    if(!parsed.success) {
-        return res.status(400).json({ error: "MISSING_CREDENTIALS", details: parsed.error.issues });
-    }
-
     try {
-        const { accessToken, refreshToken } = await loginUser(parsed.data.email, parsed.data.password);
+        const { email, password } = req.body;
+
+        const { accessToken, refreshToken } = await authService.loginUser(email, password);
 
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
@@ -37,7 +31,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
             sameSite: "lax",
         });
 
-        return res.status(200).json({ accessToken });
+        return res.status(200).json({ data: { accessToken } });
     }
     catch(err) {
         next(err);
@@ -46,12 +40,13 @@ export async function login(req: Request, res: Response, next: NextFunction) {
 
 export async function getUserInfo(req: Request, res: Response, next: NextFunction) {
     try {
-        const user = await getUserById(req.user.userId);
+        const user = await authService.getUserById(req.user!.userId);
 
         return res.status(200).json({ 
-            id: user.id,
-            name: user.name,
-            organizationId: req.user.organizationId,
+            data: {
+                id: user.id,
+                name: user.name,
+            },
         });
     }
     catch(err) {
@@ -60,18 +55,14 @@ export async function getUserInfo(req: Request, res: Response, next: NextFunctio
 }
 
 export function refresh(req: Request, res: Response, next: NextFunction) {
-    
-    console.log("RAW COOKIE: ", req.headers.cookie);
-    console.log("PARSED COOKIES: ", req.cookies);
-
-    const token = req.cookies?.refreshToken;
-
-    if(!token) {
-        return next(new Error("REFRESH_TOKEN_INVALID"));
-    }
-
     try {
-        const { accessToken, refreshToken } = refreshTokens(token);
+        const token = req.cookies?.refreshToken;
+
+        if(!token) {
+            throw new Error("REFRESH_TOKEN_INVALID");
+        }
+
+        const { accessToken, refreshToken } = authService.refreshTokens(token);
 
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
@@ -79,7 +70,7 @@ export function refresh(req: Request, res: Response, next: NextFunction) {
             sameSite: "lax",
         });
 
-        res.json({ accessToken });
+        res.status(200).json({ data: accessToken });
     }
     catch(err) {
         next(err);
@@ -94,6 +85,8 @@ export function logout(req: Request, res: Response) {
     });
 
     return res.status(200).json({
-        message: "Logged out successfully",
+        data: {
+            message: "Logged out successfully",
+        },
     });
 }

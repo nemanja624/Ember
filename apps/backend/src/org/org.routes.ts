@@ -2,7 +2,6 @@ import { Router } from "express";
 import type { Router as ExpressRouter } from "express";
 import { authMiddleware } from "../auth/auth.middleware.js";
 import { userOrganizations, organizationById, updateOrganization, inviteMember, createOrganization } from "./org.controller.js";
-import { requireRole } from "../auth/auth.requireRole.js";
 import { validate } from "../shared/validate.middleware.js";
 import { createOrgSchema, inviteMemberSchema, updateOrgSchema } from "./org.schema.js";
 import { requireOrgRole } from "../auth/auth.requireOrgRole.js";
