@@ -1,3 +1,5 @@
+import type { OrgMembership } from "../../generated/prisma/browser.ts";
+
 declare global {
     namespace Express {
         interface Request {
@@ -6,6 +8,7 @@ declare global {
                 organizationId: string;
                 role: string;
             };
+            membership?: OrgMembership;
         }
     }
 }
