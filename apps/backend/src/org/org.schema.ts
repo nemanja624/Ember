@@ -11,5 +11,16 @@ export const inviteMemberSchema = z.object({
     }),
 });
 
+export const createOrgSchema = z.object({
+    body: z.object({
+        name: z
+        .string({ message: "NAME_REQUIRED" })
+        .min(2, "NAME_TOO_SHORT")
+        .max(50, "NAME_TOO_LONG")
+        .trim(),
+    }),
+});
+
 export type UpdateOrgInput = z.infer<typeof updateOrgSchema>;
 export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;
+export type CreateOrgInput = z.infer<typeof createOrgSchema>["body"];

@@ -21,6 +21,33 @@ export async function getMyOrganization(userId: string, organizationId: string) 
     return membership.organization;
 }
 
+export async function getUserOrganizations(userId: string) {
+    const memberships = await prisma.orgMembership.findMany({
+        where: { userId },
+        include: {
+            organization: {
+                select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    createdAt: true,
+                },
+            },
+        },
+        orderBy: {
+            organization: { createdAt: "desc" },
+        },
+    });
+
+    return memberships.map((m) => ({
+        id: m.organization.id,
+        name: m.organization.name,
+        slug: m.organization.slug,
+        role: m.role,
+        createdAt: m.organization.createdAt,
+    }));
+}
+
 export async function getOrganizationById(orgId: string) {
     const org = await prisma.organization.findUnique({
         where: { id: orgId },
@@ -42,6 +69,38 @@ export async function getOrganizationById(orgId: string) {
     return org;
 }
 
+export async function createOrganization(userId: string, name: string) {
+    const slug = generateSlug(name);
+
+    const organization = await prisma.organization.create({
+        data: {
+            name,
+            slug,
+            memberships: {
+                create: {
+                    userId,
+                    role: "OWNER",
+                    
+                },
+            },
+        },
+        include: {
+            memberships: {
+                where: { userId },
+                select: { role: true },
+            },
+        },
+    });
+
+    return {
+        id: organization.id,
+        name: organization.name,
+        slug: organization.slug,
+        role: organization.memberships[0]?.role || "OWNER",
+        createdAt: organization.createdAt,
+    };
+}
+
 export async function updateOrganization(orgId: string, data: UpdateOrgInput) {
     const updateData: Record<string, any> = {};
 
@@ -54,3 +113,15 @@ export async function updateOrganization(orgId: string, data: UpdateOrgInput) {
         data: updateData,
     });
 }
+
+const generateSlug = (name: string): string => {
+    const baseSlug = name
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, "")
+        .replace(/[\s_-]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+
+    const randomSuffix = Math.random().toString(36).substring(2, 6);
+    return `${baseSlug}-${randomSuffix}`;
+};
