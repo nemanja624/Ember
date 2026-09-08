@@ -11,8 +11,11 @@ const ERROR_STATUS_MAP: Record<string, number> = {
   USER_ALREADY_EXISTS: 409,
   MEMBER_ALREADY_EXISTS: 409,
   NOT_A_MEMBER: 403,
+  MEMBERSHIP_NOT_FOUND: 404,
   INSUFFICIENT_PRIVILEGES: 403,
   ORGANIZATION_ID_REQUIRED: 400,
+  CANNOT_CHANGE_LAST_OWNER_ROLE: 400,
+  CANNOT_REMOVE_LAST_OWNER: 400,
 };
 
 export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction) {

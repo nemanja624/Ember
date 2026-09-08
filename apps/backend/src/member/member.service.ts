@@ -29,3 +29,73 @@ export async function inviteMember(orgId: string, input: InviteMemberInput) {
         },
     });
 }
+
+export async function updateMemberRole(organizationId: string, userId: string, newRole: "OWNER" | "ADMIN" | "MEMBER" | "VIEWER") {
+    const membership = await prisma.orgMembership.findUnique({
+        where: {
+            organizationId_userId: { organizationId, userId },
+        },
+    });
+
+    if(!membership) {
+        throw new Error("MEMBERSHIP_NOT_FOUND");
+    }
+
+    if(membership.role === "OWNER" && newRole !== "OWNER") {
+        const ownerCount = await prisma.orgMembership.count({
+            where: { 
+                organizationId,
+                role: "OWNER",
+            },
+        });
+
+        if(ownerCount <= 1) {
+            throw new Error("CANNOT_CHANGE_LAST_OWNER_ROLE");
+        }
+    }
+
+    const updatedMembership = await prisma.orgMembership.update({
+        where: {
+            organizationId_userId: { organizationId, userId },
+        },
+        data: {
+            role: newRole,
+        },
+    });
+
+    return updatedMembership;
+}
+
+export async function removeMember(organizationId: string, userId: string) {
+    const membership = await prisma.orgMembership.findUnique({
+        where: {
+            organizationId_userId: { organizationId, userId },
+        },
+
+    });
+
+    if(!membership) {
+        throw new Error("MEMBERSHIP_NOT_FOUND");
+    }
+
+    if(membership.role === "OWNER") {
+        const ownerCount = await prisma.orgMembership.count({
+            where: {
+                organizationId,
+                role: "OWNER",
+            },
+        });
+
+        if(ownerCount <= 1) {
+            throw new Error("CANNOT_REMOVE_LAST_OWNER");
+        }
+    }
+
+    await prisma.orgMembership.delete({
+        where: {
+            organizationId_userId: { organizationId, userId },
+        },
+    });
+
+    return { message: "Member removed successfully" };
+}
