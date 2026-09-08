@@ -1,7 +1,7 @@
 import { describe, test, beforeEach, afterAll, expect } from "vitest";
 import { prisma } from "../../shared/prisma.js";
 import { getMyOrganization, getOrganizationById, updateOrganization } from "../../org/org.service.js";
-import { inviteMember } from "../../member/member.service.js";
+import { inviteMember } from "../../org/member.service.js";
 
 async function createTestUser(overrides: Partial<Parameters<typeof prisma.user.create>[0]["data"]> = {}) {
   return await prisma.user.create({

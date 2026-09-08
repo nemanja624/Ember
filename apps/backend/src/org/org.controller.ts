@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import * as organizationService from "./org.service.js";
-import * as memberService from "../member/member.service.js";
+import * as memberService from "./member.service.js";
 
 export async function userOrganizations(req: Request, res: Response, next: NextFunction) {
     try {

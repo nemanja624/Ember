@@ -3,7 +3,7 @@ import { mockDeep, type DeepMockProxy } from "vitest-mock-extended";
 import { PrismaClient } from "../../../../generated/prisma/client.js";
 import { prisma } from "../../../shared/prisma.js";
 import { getMyOrganization, getOrganizationById, updateOrganization } from "../../../org/org.service.js";
-import { inviteMember } from "../../../member/member.service.js";
+import { inviteMember } from "../../../org/member.service.js";
 
 vi.mock("../../../shared/prisma.js", () => ({
     prisma: mockDeep<PrismaClient>(),

@@ -1,5 +1,5 @@
 import { prisma } from "../shared/prisma.js";
-import type { InviteMemberInput } from "../org/org.schema.js";
+import type { InviteMemberInput } from "./member.schema.js";
 
 export async function inviteMember(orgId: string, input: InviteMemberInput) {
     const user = await prisma.user.findUnique({
