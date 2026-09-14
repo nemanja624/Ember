@@ -1,7 +1,7 @@
 import { describe, test, beforeEach, afterAll, expect } from "vitest";
 import { prisma } from "../../shared/prisma.js";
 import { getMyOrganization, getOrganizationById, updateOrganization } from "../../org/org.service.js";
-import { inviteMember } from "../../org/member.service.js";
+import { inviteMember, removeMember, updateMemberRole } from "../../org/member.service.js";
 
 async function createTestUser(overrides: Partial<Parameters<typeof prisma.user.create>[0]["data"]> = {}) {
   return await prisma.user.create({
@@ -138,6 +138,94 @@ describe("Organization & Member Integration Tests", () => {
       await expect(
         inviteMember(org.id, { email: "member@example.com", role: "MEMBER" })
       ).rejects.toThrow("MEMBER_ALREADY_EXISTS");
+    });
+  });
+
+  describe("Member Service (updateMemberRole)", () => {
+    test("should successfully update a member's role", async () => {
+      const org = await createTestOrg();
+      const user = await createTestUser();
+
+      await prisma.orgMembership.create({
+        data: { userId: user.id, organizationId: org.id, role: "MEMBER" },
+      });
+
+      const updated = await updateMemberRole(org.id, user.id, "ADMIN");
+
+      expect(updated.role).toBe("ADMIN");
+
+      const membershipInDb = await prisma.orgMembership.findUnique({
+        where: { organizationId_userId: { organizationId: org.id, userId: user.id } },
+      });
+
+      expect(membershipInDb?.role).toBe("ADMIN");
+    });
+
+    test("should throw error when attempting to demote the last OWNER", async () => {
+      const org = await createTestOrg();
+      const owner = await createTestUser();
+
+      await prisma.orgMembership.create({
+        data: { userId: owner.id, organizationId: org.id, role: "OWNER" },
+      });
+
+      await expect(updateMemberRole(org.id, owner.id, "MEMBER")).rejects.toThrow("CANNOT_CHANGE_LAST_OWNER_ROLE");
+    });
+
+    test("should allow demoting an OWNER if another OWNER exists", async () => {
+      const org = await createTestOrg();
+      const owner1 = await createTestUser();
+      const owner2 = await createTestUser();
+
+      await prisma.orgMembership.createMany({
+        data: [
+          { userId: owner1.id, organizationId: org.id, role: "OWNER" },
+          { userId: owner2.id, organizationId: org.id, role: "OWNER" },
+        ],
+      });
+
+      const updated = await updateMemberRole(org.id, owner1.id, "MEMBER");
+
+      expect(updated.role).toBe("MEMBER");
+    });
+  });
+
+  describe("Member Service (removeMember)", () => {
+    test("should successfully remove a non-owner member", async () => {
+      const org = await createTestOrg();
+      const user = await createTestUser();
+
+      await prisma.orgMembership.create({
+        data: { userId: user.id, organizationId: org.id, role: "MEMBER" },
+      });
+
+      const result = await removeMember(org.id, user.id);
+
+      expect(result.message).toBe("Member removed successfully");
+
+      const membershipInDb = await prisma.orgMembership.findUnique({
+        where: { organizationId_userId: { organizationId: org.id, userId: user.id } },
+      });
+
+      expect(membershipInDb).toBeNull();
+    });
+    
+    test("should throw error if membership is not found", async () => {
+      const org = await createTestOrg();
+      const user = await createTestUser();
+
+      await expect(removeMember(org.id, user.id)).rejects.toThrow("MEMBERSHIP_NOT_FOUND");
+    });
+
+    test("should successfully remove a non-owner member", async () => {
+      const org = await createTestOrg();
+      const owner = await createTestUser();
+
+      await prisma.orgMembership.create({
+        data: { userId: owner.id, organizationId: org.id, role: "OWNER" },
+      });
+
+      await expect(removeMember(org.id, owner.id)).rejects.toThrow("CANNOT_REMOVE_LAST_OWNER");
     });
   });
 });

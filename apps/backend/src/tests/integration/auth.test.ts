@@ -47,7 +47,7 @@ describe("Auth Integration Tests", () => {
       });
 
       expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty("accessToken");
+      expect(response.body.data).toHaveProperty("accessToken");
 
       const cookies = response.headers["set-cookie"];
 
@@ -85,7 +85,7 @@ describe("Auth Integration Tests", () => {
       });
 
       expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty("email", "new@ember.com");
+      expect(response.body.data).toHaveProperty("email", "new@ember.com");
 
       const dbUser = await prisma.user.findUnique({
         where: { email: "new@ember.com" },
