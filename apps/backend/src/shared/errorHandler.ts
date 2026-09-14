@@ -17,6 +17,7 @@ const ERROR_STATUS_MAP: Record<string, number> = {
   USER_ID_REQUIRED: 400,
   CANNOT_CHANGE_LAST_OWNER_ROLE: 400,
   CANNOT_REMOVE_LAST_OWNER: 400,
+  MONITOR_NOT_FOUND: 404,
 };
 
 export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction) {

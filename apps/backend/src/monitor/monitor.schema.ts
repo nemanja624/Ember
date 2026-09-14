@@ -1,11 +1,12 @@
 import { z } from "zod";
+import { MonitorType } from "../../generated/prisma/enums.js";
 
 export const createMonitorSchema = z.object({
     name: z
         .string({ message: "Name is required" })
         .min(1, "Name cannot be empty")
         .max(100, "Name is too long"),
-    type: z.enum(["HTTP", "HTTPS"], {
+    type: z.nativeEnum(MonitorType, {
         message: "Type must be either HTTP or HTTPS",
     }),
     target: z
