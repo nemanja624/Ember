@@ -69,6 +69,7 @@ model Monitor {
 
 enum MonitorType {
   HTTP 
+  HTTPS
 }
 
 enum OrgRole {

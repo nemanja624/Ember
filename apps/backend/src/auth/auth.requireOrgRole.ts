@@ -4,7 +4,7 @@ import { prisma } from "../shared/prisma.js";
 export const requireOrgRole = (...allowedRoles: string[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const rawOrgId = req.params.id || req.headers["x-organization-id"];
+      const rawOrgId = req.params.organizationId || req.params.id || req.headers["x-organization-id"];
 
       const orgId = Array.isArray(rawOrgId) ? rawOrgId[0] : rawOrgId;
 

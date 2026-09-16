@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
+import { ZodError } from "zod";
 
 const ERROR_STATUS_MAP: Record<string, number> = {
   MISSING_CREDENTIALS: 400,
@@ -22,6 +23,13 @@ const ERROR_STATUS_MAP: Record<string, number> = {
 };
 
 export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction) {
+  if (err instanceof ZodError) {
+    return res.status(400).json({
+      error: "Validation error",
+      details: err.issues,
+    });
+  }
+
   if (err instanceof Error) {
     const statusCode = ERROR_STATUS_MAP[err.message];
 

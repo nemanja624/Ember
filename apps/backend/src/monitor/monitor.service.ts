@@ -43,7 +43,7 @@ export async function updateMonitor(organizationId: string, monitorId: string, i
     }
 
     const cleanData = Object.fromEntries(
-        Object.entries(input).filter(([__dirname, value]) => value !== undefined)
+        Object.entries(input).filter(([key, value]) => value !== undefined)
     ) as Prisma.MonitorUpdateInput;
 
     return await prisma.monitor.update({
