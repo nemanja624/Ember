@@ -19,10 +19,6 @@ export async function organizationById(req: Request, res: Response, next: NextFu
     try {
         const organizationId = req.params.id as string;
 
-        if(!organizationId) {
-            throw new Error("ORGANIZATION_ID_REQUIRED")
-        }
-
         const org = await organizationService.getOrganizationById(organizationId);
 
         return res.status(200).json({ data: org });
@@ -50,10 +46,6 @@ export async function updateOrganization(req: Request, res: Response, next: Next
     try {
         const organizationId = req.params.id as string;
 
-        if(!organizationId) {
-            throw new Error("ORGANIZATION_ID_REQUIRED");
-        }
-
         const updated = await organizationService.updateOrganization(organizationId, req.body);
 
         return res.status(200).json({ data: updated });
@@ -66,10 +58,6 @@ export async function updateOrganization(req: Request, res: Response, next: Next
 export async function inviteMember(req: Request, res: Response, next: NextFunction) {
     try {
         const organizationId = req.params.id as string;
-
-        if(!organizationId) {
-            throw new Error("ORGANIZATION_ID_REQUIRED");
-        }
 
         const membership = await memberService.addMember(organizationId, req.body);
         

@@ -1,15 +1,13 @@
 import type { Request, Response, NextFunction } from "express";
 import * as memberService from "./member.service.js";
+import { inviteMemberSchema, updateRoleSchema } from "./member.schema.js";
 
 export async function addMember(req: Request, res: Response, next: NextFunction) {
     try {
         const organizationId = req.params.id as string;
+        const input = inviteMemberSchema.parse(req.body);
 
-        if(!organizationId) {
-            throw new Error("ORGANIZATION_ID_REQUIRED");
-        }
-
-        const membership = await memberService.addMember(organizationId, req.body);
+        const membership = await memberService.addMember(organizationId, input);
 
         return res.status(201).json({ data: membership });
     }
@@ -22,15 +20,7 @@ export async function updateMemberRole(req: Request, res: Response, next: NextFu
     try {
         const organizationId = req.params.id as string;
         const userId = req.params.userId as string;
-        const { role } = req.body;
-
-        if(!organizationId) {
-            throw new Error("ORGANIZATION_ID_REQUIRED");
-        }
-
-        if(!userId) {
-            throw new Error("USER_ID_REQUIRED");
-        }
+        const { role } = updateRoleSchema.parse(req.body);
 
         const updatedMembership = await memberService.updateMemberRole(organizationId, userId, role);
 
@@ -45,14 +35,6 @@ export async function removeMember(req: Request, res: Response, next: NextFuncti
     try {
         const organizationId = req.params.id as string;
         const userId = req.params.userId as string;
-
-        if(!organizationId) {
-            throw new Error("ORGANIZATION_ID_REQUIRED");
-        }
-
-        if(!userId) {
-            throw new Error("USER_ID_REQUIRED");
-        }
 
         const result = await memberService.removeMember(organizationId, userId);
 
