@@ -61,10 +61,26 @@ model Monitor {
   expectedStatus  Int @default(200)
   createdAt       DateTime @default(now())
 
-  organization   Organization   @relation(fields: [organizationId], references: [id])
+  organization    Organization   @relation(fields: [organizationId], references: [id])
+  checks          MonitorCheck[] 
 
   // @@index([organizationId]) - add index for fast search
   @@map("monitors")  
+}
+
+model MonitorCheck {
+  id             String   @id @default(cuid())
+  monitorId      String
+  statusCode     Int?
+  responseTimeMs Int
+  status         String   // "UP" ili "DOWN"
+  errorMessage   String?
+  createdAt      DateTime @default(now())
+
+  monitor        Monitor  @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+
+  @@index([monitorId, createdAt])
+  @@map("monitor_checks")
 }
 
 enum MonitorType {
