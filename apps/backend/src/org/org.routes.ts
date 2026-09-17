@@ -6,7 +6,7 @@ import { validate } from "../shared/validate.middleware.js";
 import { createOrgSchema, updateOrgSchema } from "../org/org.schema.js";
 import { inviteMemberSchema, updateRoleSchema } from "../org/member.schema.js";
 import { requireOrgRole } from "../auth/auth.requireOrgRole.js";
-import { inviteMember, updateMemberRole, removeMember } from "./member.controller.js";
+import { addMember, updateMemberRole, removeMember } from "./member.controller.js";
 
 export const orgRouter: ExpressRouter = Router();
 
@@ -22,7 +22,7 @@ orgRouter.patch("/:id", requireOrgRole("OWNER", "ADMIN"), validate(updateOrgSche
 
 orgRouter.patch("/:id/members/:userId", requireOrgRole("OWNER", "ADMIN"), validate(updateRoleSchema), updateMemberRole);
 
-orgRouter.post("/:id/members", requireOrgRole("OWNER", "ADMIN"), validate(inviteMemberSchema), inviteMember);
+orgRouter.post("/:id/members", requireOrgRole("OWNER", "ADMIN"), validate(inviteMemberSchema), addMember);
 
 orgRouter.delete("/:id/members/:userId", requireOrgRole("OWNER", "ADMIN"), removeMember);
 

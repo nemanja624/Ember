@@ -3,7 +3,7 @@ import { mockDeep, type DeepMockProxy } from "vitest-mock-extended";
 import { PrismaClient } from "../../../../generated/prisma/client.js";
 import { prisma } from "../../../shared/prisma.js";
 import { getMyOrganization, getOrganizationById, updateOrganization } from "../../../org/org.service.js";
-import { inviteMember } from "../../../org/member.service.js";
+import { addMember } from "../../../org/member.service.js";
 
 vi.mock("../../../shared/prisma.js", () => ({
     prisma: mockDeep<PrismaClient>(),
@@ -120,7 +120,7 @@ describe("inviteMember", () => {
     test("throws USER_NOT_FOUND if no user exists with the provided email", async () => {
         prismaMock.user.findUnique.mockResolvedValue(null);
 
-        await expect(inviteMember("org-123", { email: "missing@example.com", role: "ADMIN" }))
+        await expect(addMember("org-123", { email: "missing@example.com", role: "ADMIN" }))
             .rejects.toThrow("USER_NOT_FOUND");
 
         expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
@@ -135,7 +135,7 @@ describe("inviteMember", () => {
         prismaMock.user.findUnique.mockResolvedValue(fakeUser as any);
         prismaMock.orgMembership.findFirst.mockResolvedValue(fakeMembership as any);
 
-        await expect(inviteMember("o1", { email: "existing@example.com", role: "ADMIN" }))
+        await expect(addMember("o1", { email: "existing@example.com", role: "ADMIN" }))
             .rejects.toThrow("MEMBER_ALREADY_EXISTS");
 
         expect(prismaMock.orgMembership.findFirst).toHaveBeenCalledWith({
@@ -159,7 +159,7 @@ describe("inviteMember", () => {
         prismaMock.orgMembership.findFirst.mockResolvedValue(null);
         prismaMock.orgMembership.create.mockResolvedValue(createdMembership as any);
 
-        const result = await inviteMember("o1", {
+        const result = await addMember("o1", {
             email: "newmember@example.com",
             role: "ADMIN",
         });

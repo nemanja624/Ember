@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import * as memberService from "./member.service.js";
 
-export async function inviteMember(req: Request, res: Response, next: NextFunction) {
+export async function addMember(req: Request, res: Response, next: NextFunction) {
     try {
         const organizationId = req.params.id as string;
 
@@ -9,7 +9,7 @@ export async function inviteMember(req: Request, res: Response, next: NextFuncti
             throw new Error("ORGANIZATION_ID_REQUIRED");
         }
 
-        const membership = await memberService.inviteMember(organizationId, req.body);
+        const membership = await memberService.addMember(organizationId, req.body);
 
         return res.status(201).json({ data: membership });
     }

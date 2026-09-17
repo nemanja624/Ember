@@ -1,7 +1,7 @@
 import { describe, test, beforeEach, afterAll, expect } from "vitest";
 import { prisma } from "../../shared/prisma.js";
 import { getMyOrganization, getOrganizationById, updateOrganization } from "../../org/org.service.js";
-import { inviteMember, removeMember, updateMemberRole } from "../../org/member.service.js";
+import { addMember, removeMember, updateMemberRole } from "../../org/member.service.js";
 
 async function createTestUser(overrides: Partial<Parameters<typeof prisma.user.create>[0]["data"]> = {}) {
   return await prisma.user.create({
@@ -101,7 +101,7 @@ describe("Organization & Member Integration Tests", () => {
         name: "Invite Me",
       });
 
-      const membership = await inviteMember(org.id, {
+      const membership = await addMember(org.id, {
         email: "invite@example.com",
         role: "ADMIN",
       });
@@ -122,7 +122,7 @@ describe("Organization & Member Integration Tests", () => {
       const org = await createTestOrg({ name: "My Org", slug: "my-org" });
 
       await expect(
-        inviteMember(org.id, { email: "nonexistent@example.com", role: "MEMBER" })
+        addMember(org.id, { email: "nonexistent@example.com", role: "MEMBER" })
       ).rejects.toThrow("USER_NOT_FOUND");
     });
 
@@ -136,7 +136,7 @@ describe("Organization & Member Integration Tests", () => {
       });
 
       await expect(
-        inviteMember(org.id, { email: "member@example.com", role: "MEMBER" })
+        addMember(org.id, { email: "member@example.com", role: "MEMBER" })
       ).rejects.toThrow("MEMBER_ALREADY_EXISTS");
     });
   });

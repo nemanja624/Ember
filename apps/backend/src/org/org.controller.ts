@@ -71,7 +71,7 @@ export async function inviteMember(req: Request, res: Response, next: NextFuncti
             throw new Error("ORGANIZATION_ID_REQUIRED");
         }
 
-        const membership = await memberService.inviteMember(organizationId, req.body);
+        const membership = await memberService.addMember(organizationId, req.body);
         
         return res.status(201).json({ data: membership });
     }
