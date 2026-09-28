@@ -1,5 +1,6 @@
 import { prisma } from "../shared/prisma.js";
 import { pingMonitor } from "./worker.checker.js";
+import { sendWebhookNotification } from "./notifier.service.js";
 
 export async function runHealthcheckCycle() {
     const now = new Date();
@@ -29,27 +30,64 @@ export async function runHealthcheckCycle() {
             monitor.timeoutMs,
         );
 
-        await prisma.$transaction([
-            prisma.monitorCheck.create({
+        const previousStatus = monitor.status;
+        const newStatus = result.status;
+        const isStatusChanged = previousStatus !== newStatus && previousStatus !== "UNKNOWN";
+
+        await prisma.$transaction(async (tx) => {
+            await tx.monitorCheck.create({
                 data: {
                     monitorId: monitor.id,
                     statusCode: result.statusCode,
                     responseTimeMs: result.responseTimeMs,
-                    status: result.status,
+                    status: newStatus,
                     errorMessage: result.errorMessage,
                 },
-            }),
+            });
 
-            prisma.monitor.update({
+            await tx.monitor.update({
                 where: { id: monitor.id },
                 data: {
-                    status: result.status,
+                    status: newStatus,
                     lastCheckedAt: now,
                 },
-            }),
-        ]);
+            });
+
+            if(isStatusChanged) {
+                if(newStatus === "DOWN") {
+                    await tx.incident.create({
+                        data: {
+                            monitorId: monitor.id,
+                            cause: result.errorMessage,
+                            startedAt: now,
+                        },
+                    });
+                } else if(newStatus === "UP") {
+                    const openIncident = await tx.incident.findFirst({
+                        where: { mnitorId: monitor.id, resolvedAt: null },
+                        orderBy: { startedAt: "desc" },
+                    });
+
+                    if(openIncident) {
+                        await tx.incident.update({
+                            where: { id: openIncident.id },
+                            data: { resolvedAt: now },
+                        });
+                    }
+                }
+            }
+        });
+
+        if (isStatusChanged && monitor.webhookUrl) {
+            sendWebhookNotification(monitor.webhookUrl, {
+                monitorName: monitor.name,
+                targetUrl: monitor.target,
+                status: newStatus as "UP" | "DOWN",
+                errorMessage: result.errorMessage,
+                responseTimeMs: result.responseTimeMs,
+            });
+        }
     });
 
-
-    await Promise.allSettled(checkPromises);
+  await Promise.allSettled(checkPromises);
 }

@@ -63,9 +63,11 @@ model Monitor {
   status          String         @default("UNKNOWN") 
   lastCheckedAt   DateTime?                          
   createdAt       DateTime       @default(now())
+  webhookUrl      String?
 
   organization    Organization   @relation(fields: [organizationId], references: [id])
   checks          MonitorCheck[]
+  incidents        Incident[]
   
   @@map("monitors")  
 }
@@ -83,6 +85,19 @@ model MonitorCheck {
 
   @@index([monitorId, createdAt])
   @@map("monitor_checks")
+}
+
+model Incident {
+  id             String   @id @default(cuid())
+  monitorId      String
+  cause          String?
+  startedAt      DateTime @default(now())
+  resolvedAt     DateTime?
+
+  monitor        Monitor  @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+
+  @@index([monitorId])
+  @@map("incidents")
 }
 
 enum MonitorType {
