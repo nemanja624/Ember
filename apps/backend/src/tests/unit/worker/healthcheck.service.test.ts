@@ -1,6 +1,5 @@
 import { describe, it as test, expect, vi, beforeEach } from "vitest";
 
-// 1. Hoist-ujemo mock funkciju sa ispravnom relativnom putanjom
 const { mockPingMonitor } = vi.hoisted(() => ({
   mockPingMonitor: vi.fn(),
 }));

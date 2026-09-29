@@ -11,18 +11,11 @@ import { addMember, updateMemberRole, removeMember } from "./member.controller.j
 export const orgRouter: ExpressRouter = Router();
 
 orgRouter.use(authMiddleware);
-
 orgRouter.get("/me", userOrganizations);
-
 orgRouter.get("/:id", requireOrgRole("OWNER", "ADMIN", "MEMBER"), organizationById);
-
 orgRouter.post("/", validate(createOrgSchema), createOrganization);
-
 orgRouter.patch("/:id", requireOrgRole("OWNER", "ADMIN"), validate(updateOrgSchema), updateOrganization);
-
 orgRouter.patch("/:id/members/:userId", requireOrgRole("OWNER", "ADMIN"), validate(updateRoleSchema), updateMemberRole);
-
 orgRouter.post("/:id/members", requireOrgRole("OWNER", "ADMIN"), validate(inviteMemberSchema), addMember);
-
 orgRouter.delete("/:id/members/:userId", requireOrgRole("OWNER", "ADMIN"), removeMember);
 
