@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it as test, expect, vi, beforeEach } from "vitest";
 import { pingMonitor } from "../../../worker/worker.checker.js";
 
 describe("pingMonitor", () => {
@@ -6,7 +6,7 @@ describe("pingMonitor", () => {
     vi.restoreAllMocks();
   });
 
-  it("returns status UP when target returns an expected status code", async () => {
+  test("returns status UP when target returns an expected status code", async () => {
     const mockResponse = {
       status: 200,
       body: { cancel: vi.fn() },
@@ -21,7 +21,7 @@ describe("pingMonitor", () => {
     expect(mockResponse.body.cancel).toHaveBeenCalled();
   });
 
-  it("returns status DOWN when target returns an unexpected status code", async () => {
+  test("returns status DOWN when target returns an unexpected status code", async () => {
     const mockResponse = {
       status: 500,
       body: { cancel: vi.fn() },
@@ -35,7 +35,7 @@ describe("pingMonitor", () => {
     expect(result.errorMessage).toContain("Expected status 200, but got 500");
   });
 
-  it("returns status DOWN and timeout message when AbortError happens", async () => {
+  test("returns status DOWN and timeout message when AbortError happens", async () => {
     const timeoutError = new Error("The operation was aborted");
     timeoutError.name = "TimeoutError";
 

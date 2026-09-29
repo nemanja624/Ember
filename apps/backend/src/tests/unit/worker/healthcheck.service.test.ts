@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it as test, expect, vi, beforeEach } from "vitest";
 
 // 1. Hoist-ujemo mock funkciju sa ispravnom relativnom putanjom
 const { mockPingMonitor } = vi.hoisted(() => ({
@@ -17,7 +17,7 @@ describe("runHealthcheckCycle", () => {
     vi.clearAllMocks();
   });
 
-  it("processes monitors and creates an incident", async () => {
+  test("processes monitors and creates an incident", async () => {
     const mockMonitor = {
       id: "mon-1",
       name: "Test API",
