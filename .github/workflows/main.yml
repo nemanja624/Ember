@@ -1,13 +1,19 @@
-name: CI Pipeline
+name: CI 
 
 on:
   push:
-    branches: [ main, master, develop ]
+    branches:
+      - main
+      - master
+      - develop
   pull_request:
-    branches: [ main, master, develop ]
+    branches:
+      - main
+      - master
+      - develop
 
 jobs:
-  test:
+  backend:
     runs-on: ubuntu-latest
 
     services:
@@ -25,31 +31,34 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+    env:
+      DATABASE_URL: "postgresql://lebron:lbj6kd35kb24dw3@localhost:5432/ember?schema=public"
+      JWT_ACCESS_SECRET: ci_access_secret_placeholder_12345
+      JWT_REFRESH_SECRET: ci_refresh_secret_placeholder_12345
+
     steps:
-      - name: Preuzimanje koda (Checkout)
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Postavljanje Node.js okruženja
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
+          cache: pnpm
 
-      - name: Instalacija pnpm-a
-        uses: pnpm/action-setup@v2
-        with:
-          version: latest
-
-      - name: Instalacija zavisnosti
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generisanje Prisma Client-a
-        run: pnpm prisma generate
-        env:
-          DATABASE_URL: postgresql://lebron:lbj6kd35kb24dw3@localhost:5432/ember?schema=public
+      - name: Generate Prisma Client
+        run: pnpm --dir apps/backend exec prisma generate
 
-      - name: Pokretanje testova
-        run: pnpm test
-        env:
-          DATABASE_URL: postgresql://lebron:lbj6kd35kb24dw3@localhost:5432/ember?schema=public
-          JWT_ACCESS_SECRET: ci_access_secret_placeholder_12345
-          JWT_REFRESH_SECRET: ci_refresh_secret_placeholder_12345
+      - name: TypeScript check
+        run: pnpm --dir apps/backend exec tsc --noEmit
+
+      - name: Run tests
+        run: pnpm --dir apps/backend test
