@@ -1,39 +1,55 @@
-name: CI
+name: CI Pipeline
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main, master, develop ]
   pull_request:
-    branches:
-      - main
+    branches: [ main, master, develop ]
 
 jobs:
-  backend:
+  test:
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: "postgresql://user:password@localhost:5432/dummy"
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: lebron
+          POSTGRES_PASSWORD: lbj6kd35kb24dw3
+          POSTGRES_DB: ember
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
-      - name: Checkout repository
+      - name: Preuzimanje koda (Checkout)
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Setup Node.js
+      - name: Postavljanje Node.js okruženja
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: pnpm
+          node-version: 20
 
-      - name: Install dependencies
+      - name: Instalacija pnpm-a
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+
+      - name: Instalacija zavisnosti
         run: pnpm install --frozen-lockfile
 
-      - name: Generate Prisma Client
-        run: pnpm --dir apps/backend exec prisma generate
+      - name: Generisanje Prisma Client-a
+        run: pnpm prisma generate
+        env:
+          DATABASE_URL: postgresql://lebron:lbj6kd35kb24dw3@localhost:5432/ember?schema=public
 
-      - name: TypeScript check
-        run: pnpm --dir apps/backend exec tsc --noEmit
+      - name: Pokretanje testova
+        run: pnpm test
+        env:
+          DATABASE_URL: postgresql://lebron:lbj6kd35kb24dw3@localhost:5432/ember?schema=public
+          JWT_ACCESS_SECRET: ci_access_secret_placeholder_12345
+          JWT_REFRESH_SECRET: ci_refresh_secret_placeholder_12345
