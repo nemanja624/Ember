@@ -57,6 +57,9 @@ jobs:
       - name: Generate Prisma Client
         run: pnpm --dir apps/backend exec prisma generate
 
+      - name: Push Database Schema (Prisma DB Push)
+        run: pnpm --dir apps/backend exec prisma db push
+
       - name: TypeScript check
         run: pnpm --dir apps/backend exec tsc --noEmit
 
